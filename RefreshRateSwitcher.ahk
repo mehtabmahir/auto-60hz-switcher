@@ -38,21 +38,6 @@ CheckBrowser:
         }
     }
 
-    if (!youtubeTabOpen && WinExist("ahk_class ApplicationFrameWindow"))
-    {
-        WinGet, edgeList, List, ahk_class ApplicationFrameWindow
-        Loop, %edgeList%
-        {
-            thisEdge := edgeList%A_Index%
-            WinGetTitle, edgeTitle, ahk_id %thisEdge%
-            if (InStr(edgeTitle, "YouTube"))
-            {
-                youtubeTabOpen := true
-                break
-            }
-        }
-    }
-
     ; If within cooldown, skip refresh rate changes
     if (cooldown && (A_TickCount - cooldownStart < cooldownDuration))
         return
