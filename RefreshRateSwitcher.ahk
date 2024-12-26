@@ -1,12 +1,10 @@
 ﻿#Persistent
-SetTimer, CheckBrowser, 2000 ; Check every 2 seconds
+SetTimer, CheckBrowser, 500 ; Check every 1 seconds
 currentRefreshRate := 120 ; Assume you start at 120Hz
-youtubeTabOpen := false ; Track if YouTube tab is open
-lastYouTubeTime := 0 ; Time when YouTube was last detected
 lastPowerStatus := -1 ; Initialize with an invalid value
 cooldown := false ; Add a cooldown to prevent quick switching
 cooldownStart := 0
-cooldownDuration := 2000 ; 2 second cooldown
+cooldownDuration := 500 ; 1-second cooldown
 return
 
 CheckBrowser:
@@ -19,22 +17,17 @@ CheckBrowser:
     justUnplugged := (lastPowerStatus == 1 && AC_status == 0)
     lastPowerStatus := AC_status
 
-    previousYouTubeState := youtubeTabOpen
-    youtubeTabOpen := false
-
-    ; Determine if a YouTube tab is open (first Chrome, then Edge)
-    if WinExist("ahk_class Chrome_WidgetWin_1")
+    ; Check if the active window is in fullscreen
+    fullscreenDetected := false
+    SysGet, screenWidth, 78
+    SysGet, screenHeight, 79
+    WinGet, winID, ID, A ; Get active window ID
+    if winID
     {
-        WinGet, chromeList, List, ahk_class Chrome_WidgetWin_1
-        Loop, %chromeList%
+        WinGetPos, winX, winY, winWidth, winHeight, ahk_id %winID%
+        if (winWidth = screenWidth && winHeight = screenHeight)
         {
-            thisChrome := chromeList%A_Index%
-            WinGetTitle, chromeTitle, ahk_id %thisChrome%
-            if (InStr(chromeTitle, "YouTube"))
-            {
-                youtubeTabOpen := true
-                break
-            }
+            fullscreenDetected := true
         }
     }
 
@@ -43,7 +36,7 @@ CheckBrowser:
         return
 
     ; Determine the target refresh rate
-    targetRefreshRate := (youtubeTabOpen && AC_status == 0) ? 60 : 120
+    targetRefreshRate := (fullscreenDetected && AC_status == 0) ? 60 : 120
 
     ; Change refresh rate if needed
     if (currentRefreshRate != targetRefreshRate || justUnplugged)
@@ -61,12 +54,6 @@ CheckBrowser:
         {
             cooldown := false
         }
-    }
-
-    ; Update last YouTube time if applicable
-    if (youtubeTabOpen)
-    {
-        lastYouTubeTime := A_TickCount
     }
 
 return
